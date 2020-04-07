@@ -37,7 +37,10 @@
    And you need to download the Pfam family accession number list (Pfam-A.clans.tsv.gz) and preprocessed Pfam database (Pfam-A.hmm.gz) for Hmmer from:
 	ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam31.0/
    The version we used is hmmer-3.2.1 and Pfam 31.0.
-   After installing the software properly, please put the Pfam-A.hmm under the pfam folder and copy it to the hmmer directory and run this command in the pfam folder:
+   After installing the software properly, please put the Pfam-A.hmm under the pfam folder and copy it to the hmmer directory. At here, we assume you put the pfam folder under the "hmmer-3.2.1" folder.
+   Before run the hmmer, you need to compress the database first by:
+   	../src/hmmpress Pfam_A.hmm
+   After putting all files under the pfam folder, then please run this command in the pfam folder:
 	../src/hmmscan --tblout uniqueProtein.output --cpu 5 --acc --cut_ga ../pfam/Pfam-A.hmm uniqueProtein.fasta
    "../src/hmmscan" is the hmmscan program path, the "uniqueProtein.output" is the output file name, "./pfam/Pfam-A.hmm" is the preprocessed database path, "uniqueProtein.fasta" is the input FASTA format file.
    Put the output file to the pfam folder and run:
@@ -47,7 +50,7 @@
 	download.igb.uci.edu
    Then use the fasta format of protein sequences as input to get the result. This software will output several files. We only need two files which are ended with ".ss" and ".acc". For us, their names are "uniqueProtein.fasta.acc" and "uniqueProtein.fasta.ss".
    Copy those two files to "our_format" fold and run:
-	python -p uniqueProtein.fasta -a uniqueProtein.fasta.acc -s uniqueProtein.fasta.ss 
+	python group.py -p uniqueProtein.fasta -a uniqueProtein.fasta.acc -s uniqueProtein.fasta.ss 
 
 8. Prepare for classification of proteins. Go to the "uniprotID_Dict" folder in the root path and extract the unique uniprot ID as:
 	python extractUniID.py

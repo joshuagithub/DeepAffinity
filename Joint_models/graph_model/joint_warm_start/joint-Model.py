@@ -21,8 +21,8 @@ from tflearn.layers.conv import conv_2d, max_pool_2d,conv_1d,max_pool_1d
 from tflearn.layers.normalization import local_response_normalization
 from tflearn.layers.estimator import regression
 from tflearn.layers.merge_ops import merge
-#from tflearn.layers.recurrent import bidirectional_rnn, BasicLSTMCell,GRUCell
-from recurrent import bidirectional_rnn, BasicLSTMCell,GRUCell
+from tflearn.layers.recurrent import bidirectional_rnn, BasicLSTMCell,GRUCell
+#from recurrent import bidirectional_rnn, BasicLSTMCell,GRUCell
 
 
 
@@ -164,7 +164,7 @@ def read_labels(path):
             x.append(float(line)) 
  
     #y = normalize_labels(x)
-    return y
+    return x
 
 
 def read_initial_state_weigths(path,size1,size2):
@@ -435,7 +435,7 @@ reg = regression(linear, optimizer='adam', learning_rate=0.0001,
 # Training
 model = tflearn.DNN(reg, tensorboard_verbose=0,tensorboard_dir='./mytensor/',checkpoint_path="./checkpoints/")
 
-model.load('checkpoints-370700')
+
 ######### Setting weights
 
 model.set_weights(prot_gru_1_gate_matrix[0],prot_gru_1_gates_kernel_init)
@@ -447,7 +447,7 @@ model.set_weights(prot_gru_2_gate_bias[0],prot_gru_2_gates_bias_init)
 model.set_weights(prot_gru_2_candidate_matrix[0],prot_gru_2_candidate_kernel_init)
 model.set_weights(prot_gru_2_candidate_bias[0],prot_gru_2_candidate_bias_init)
 
-
+#model.load('checkpoints-370700')
 ######## training
 model.fit([protein_train,compound_train_ver,compound_train_adj], {'target': IC50_train}, n_epoch=100,batch_size=64,
            validation_set=([protein_dev,compound_dev_ver,compound_dev_adj], {'target': IC50_dev}),

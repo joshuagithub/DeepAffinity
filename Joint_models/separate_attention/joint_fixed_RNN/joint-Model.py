@@ -21,8 +21,8 @@ from tflearn.layers.conv import conv_2d, max_pool_2d,conv_1d,max_pool_1d
 from tflearn.layers.normalization import local_response_normalization
 from tflearn.layers.estimator import regression
 from tflearn.layers.merge_ops import merge
-#from tflearn.layers.recurrent import bidirectional_rnn, BasicLSTMCell,GRUCell
-from recurrent import bidirectional_rnn, BasicLSTMCell,GRUCell
+from tflearn.layers.recurrent import bidirectional_rnn, BasicLSTMCell,GRUCell
+#from recurrent import bidirectional_rnn, BasicLSTMCell,GRUCell
 
 random.seed(1234)
 #### data and vocabulary
@@ -139,7 +139,6 @@ def prepare_data(data_dir, train_path, vocabulary_size,vocab,max_size,condition)
   
   return train_set
 
-
 def normalize_labels(label):
    x = []
    micro=1000000
@@ -149,6 +148,7 @@ def normalize_labels(label):
       m = -math.log10(i)+math.log10(micro)
       x.append(m)
    return x
+
 
 def read_labels(path):
     x = []
@@ -160,7 +160,7 @@ def read_labels(path):
             x.append(float(line)) 
  
     #y = normalize_labels(x)
-    return y
+    return x
 
 
 def read_initial_state_weigths(path,size1,size2):
@@ -274,7 +274,6 @@ drug_init_state_2 = tf.convert_to_tensor(np.reshape(drug_init_state_2,[batch_siz
 
 ## preparing data 
 
-
 ER_protein = prepare_data(data_dir,"./data/ER_sps",vocab_size_protein,vocab_protein,protein_MAX_size,1)
 ER_compound = prepare_data(data_dir,"./data/ER_smile",vocab_size_compound,vocab_compound,comp_MAX_size,0)
 ER_IC50 = read_labels("./data/ER_ic50")
@@ -300,6 +299,9 @@ test_protein = prepare_data(data_dir,"./data/test_sps",vocab_size_protein,vocab_
 test_compound = prepare_data(data_dir,"./data/test_smile",vocab_size_compound,vocab_compound,comp_MAX_size,0)
 test_IC50 = read_labels("./data/test_ic50")
 
+#train_protein += test_protein + ER_protein + GPCR_protein + kinase_protein + channel_protein
+#train_compound += test_compound + ER_compound + GPCR_compound + kinase_compound + channel_compound
+#train_IC50 += test_IC50 + ER_IC50 + GPCR_IC50 + kinase_IC50 + channel_IC50
 
 ## separating train,dev, test data
 compound_train, compound_dev, IC50_train, IC50_dev, protein_train, protein_dev = train_dev_split(train_protein,train_compound,train_IC50,dev_perc,comp_MAX_size,protein_MAX_size,batch_size)
@@ -311,6 +313,7 @@ prot_gru_1 = tflearn.gru(prot_embd, GRU_size_prot,initial_state= prot_init_state
 prot_gru_1 = tf.stack(prot_gru_1,axis=1)
 prot_gru_2 = tflearn.gru(prot_gru_1, GRU_size_prot,initial_state= prot_init_state_2,trainable=False,return_seq=True)
 prot_gru_2=tf.stack(prot_gru_2,axis=1)
+
 W_prot = tflearn.variables.variable(name="Attn_W_prot",shape=[GRU_size_prot,GRU_size_prot],initializer=tf.random_normal([GRU_size_prot,GRU_size_prot],stddev=0.1),restore=False)
 b_prot = tflearn.variables.variable(name="Attn_b_prot",shape=[GRU_size_prot],initializer=tf.random_normal([GRU_size_prot],stddev=0.1),restore=False)
 U_prot = tflearn.variables.variable(name="Attn_U_prot",shape=[GRU_size_prot],initializer=tf.random_normal([GRU_size_prot],stddev=0.1),restore=False)
@@ -373,7 +376,6 @@ conv_3 = conv_1d(Attn_drug_reshape, 64, 4,2, activation='leakyrelu', weights_ini
 pool_3 = max_pool_1d(conv_3, 4,name='pool3')
 drug_reshape_6 = tflearn.reshape(pool_3, [-1, 64*16])
 
-
 drug_embd_W = []
 drug_gru_1_gate_matrix = []
 drug_gru_1_gate_bias = []
@@ -416,10 +418,9 @@ reg = regression(linear, optimizer='adam', learning_rate=0.001,
 # Training
 model = tflearn.DNN(reg, tensorboard_verbose=0,tensorboard_dir='./mytensor/',checkpoint_path="./checkpoints/")
 
-
 ######### Setting weights
 
-model.set_weights(prot_embd_W[0],prot_embd_init) 
+model.set_weights(prot_embd_W[0],prot_embd_init)
 model.set_weights(prot_gru_1_gate_matrix[0],prot_gru_1_gates_kernel_init)
 model.set_weights(prot_gru_1_gate_bias[0],prot_gru_1_gates_bias_init)
 model.set_weights(prot_gru_1_candidate_matrix[0],prot_gru_1_candidate_kernel_init)
@@ -428,7 +429,6 @@ model.set_weights(prot_gru_2_gate_matrix[0],prot_gru_2_gates_kernel_init)
 model.set_weights(prot_gru_2_gate_bias[0],prot_gru_2_gates_bias_init)
 model.set_weights(prot_gru_2_candidate_matrix[0],prot_gru_2_candidate_kernel_init)
 model.set_weights(prot_gru_2_candidate_bias[0],prot_gru_2_candidate_bias_init)
-
 
 model.set_weights(drug_embd_W[0],drug_embd_init)
 model.set_weights(drug_gru_1_gate_matrix[0],drug_gru_1_gates_kernel_init)
@@ -550,7 +550,6 @@ print(mse)
 results = sm.OLS(y_pred,sm.add_constant(kinase_IC50)).fit()
 print(results.summary())
 
-
 print("error on channel")
 size = 64
 length_channel = len(channel_protein)
@@ -575,6 +574,7 @@ print(mse)
 
 results = sm.OLS(y_pred,sm.add_constant(channel_IC50)).fit()
 print(results.summary())
+
 
 
 print("error on train")
